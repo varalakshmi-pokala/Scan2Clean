@@ -204,7 +204,7 @@ async function submitRequest(){
     if(file) formData.append("image", file);
 
     try{
-        await fetch("http://192.168.1.37:5000/add-request",{
+        await fetch("https://scan2clean.onrender.com/add-request",{
             method:"POST",
             body:formData
         });
