@@ -72,7 +72,7 @@
 
     <!-- Welcome -->
     <div class="welcome-container" id="welcome-page">
-        <h1 style="color:black;font-style:italic;">Welcome to Ca$h for Tra$h</h1>
+        <h1 style="color:black;font-style:italic;">Welcome to Scan2Clean</h1>
 
         <button onclick="showRegistrationPage()">Go to Registration</button>
         <button onclick="toggleAboutUs()">About Us</button>
@@ -204,7 +204,7 @@ async function submitRequest(){
     if(file) formData.append("image", file);
 
     try{
-        await fetch("https://scan2clean.onrender.com/add-request",{
+        await fetch("/add-request",{
             method:"POST",
             body:formData
         });
