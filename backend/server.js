@@ -15,27 +15,27 @@ const app = express();
 // ===============================
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads")); // serve uploaded images
+app.use("/uploads", express.static("uploads"));
+
+
+// ✅ Serve frontend (VERY IMPORTANT)
+app.use(express.static(path.join(__dirname, "../public")));
 
 
 // ===============================
 // MongoDB Connection
 // ===============================
-
-// 👉 Uses Render ENV first
-// 👉 Falls back to local for laptop testing
-
 const MONGO_URL =
   process.env.MONGO_URL || "mongodb://127.0.0.1:27017/scan2clean";
 
 mongoose
   .connect(MONGO_URL)
   .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.log("❌ DB Error:", err));
+  .catch((err) => console.log(err));
 
 
 // ===============================
-// Multer (Image Upload)
+// Multer setup
 // ===============================
 const storage = multer.diskStorage({
   destination: "uploads/",
@@ -43,98 +43,66 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + "-" + file.originalname);
   },
 });
-
 const upload = multer({ storage });
 
 
 // ===============================
-// Schema & Model
+// Schema
 // ===============================
-const requestSchema = new mongoose.Schema(
-  {
-    name: String,
-    email: String,
-    phone: String,
-    description: String,
-    date: String,
-    location: String,
-    image: String,
-    status: {
-      type: String,
-      default: "Pending",
-    },
-  },
-  { timestamps: true }
-);
-
-const Request = mongoose.model("Request", requestSchema);
+const Request = mongoose.model("Request", {
+  name: String,
+  email: String,
+  phone: String,
+  description: String,
+  date: String,
+  location: String,
+  image: String,
+  status: { type: String, default: "Pending" },
+});
 
 
 // ===============================
 // Routes
 // ===============================
 
-// Health check
+// ⭐ Serve homepage HTML
 app.get("/", (req, res) => {
-  res.send("🚀 Cash for Trash Backend Running");
+  res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
 
-// ✅ Add Request
+// Add request
 app.post("/add-request", upload.single("image"), async (req, res) => {
-  try {
-    const newRequest = await Request.create({
-      ...req.body,
-      image: req.file ? req.file.filename : "",
-    });
+  const newRequest = await Request.create({
+    ...req.body,
+    image: req.file ? req.file.filename : "",
+  });
 
-    res.json({ message: "Saved successfully", data: newRequest });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json({ message: "Saved successfully", data: newRequest });
 });
 
 
-// ✅ Get all requests
+// Get all
 app.get("/requests", async (req, res) => {
-  try {
-    const data = await Request.find().sort({ createdAt: -1 });
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const data = await Request.find().sort({ createdAt: -1 });
+  res.json(data);
 });
 
 
-// ✅ Update status
+// Update
 app.put("/update/:id", async (req, res) => {
-  try {
-    await Request.findByIdAndUpdate(req.params.id, {
-      status: req.body.status,
-    });
-
-    res.json({ message: "Updated" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  await Request.findByIdAndUpdate(req.params.id, {
+    status: req.body.status,
+  });
+  res.json({ message: "Updated" });
 });
 
 
 // ===============================
-// Start Server
+// Start Server (LAST ALWAYS)
 // ===============================
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () =>
-  console.log(`🔥 Server running on port ${PORT}`)
-);
-app.use(express.static("public"));
-
-app.get("/", (req,res)=>{
-   res.sendFile(__dirname + "/public/index.html");
+app.listen(PORT, () => {
+  console.log(`🔥 Server running on ${PORT}`);
 });
-
-});
-
-
